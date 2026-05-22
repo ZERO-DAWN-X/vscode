@@ -2613,7 +2613,11 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		const bannerHeight = this.bannerPartView.minimumHeight;
 		const statusBarHeight = this.statusBarPartView.minimumHeight;
 		const activityBarWidth = this.activityBarPartView.minimumWidth;
-		const middleSectionHeight = height - titleBarHeight - statusBarHeight;
+		// Subtract the bottom-only gap (between the middle cards and the
+		// status bar) from the middle section's height so the descriptor sizes
+		// still sum to the container height:
+		//   title + middle + gap + status === height.
+		const middleSectionHeight = height - titleBarHeight - statusBarHeight - WORKBENCH_LAYOUT_GAP;
 
 		const titleAndBanner: ISerializedNode[] = [
 			{
@@ -2673,33 +2677,62 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			sideBar: sideBarNode
 		}, width, middleSectionHeight);
 
-		// Seamless symmetric layout: the outer vertical branch inherits the
-		// grid-level gap so every side of the middle cards gets the same
-		// breathing room — title bar to middle (top), middle to status bar
-		// (bottom), and the middle's own horizontal padding on the left/right
-		// edges. Activity bar / editor / aux bar all have a uniform N-px gap
-		// on all four sides.
+		// Asymmetric vertical layout: title bar sits flush against the middle
+		// section (NO gap below title bar), while a gap is inserted between
+		// the middle section and the status bar (BOTTOM gap only).
+		//
+		// Because branch orientations alternate (outer VERTICAL → child
+		// HORIZONTAL → grandchild VERTICAL), achieving a bottom-only gap
+		// requires wrapping middle + status bar in a vertical sub-branch,
+		// which in turn must be wrapped in a single-child horizontal branch
+		// to satisfy the alternation rule.
+		const bottomSectionHeight = middleSectionHeight + WORKBENCH_LAYOUT_GAP + statusBarHeight;
+
 		const result: ISerializedGrid = {
 			root: {
 				type: 'branch',
 				size: width,
+				// Title bar + banner sit flush against the inner bottom
+				// section — no top gap.
+				gap: 0,
 				data: [
 					...(this.shouldShowBannerFirst() ? titleAndBanner.reverse() : titleAndBanner),
 					{
+						// HORIZONTAL single-child wrapper — only here to
+						// satisfy the alternating-orientation rule so the
+						// next branch can be VERTICAL and own the
+						// bottom-only gap.
 						type: 'branch',
-						data: middleSection,
-						size: middleSectionHeight,
-						// Horizontal padding so the leftmost (activity bar) and
-						// rightmost (auxiliary bar) cards don't touch the
-						// window edges. Matches the grid-level gap value for
-						// visual consistency.
-						padding: WORKBENCH_LAYOUT_MIDDLE_PADDING
-					},
-					{
-						type: 'leaf',
-						data: { type: Parts.STATUSBAR_PART },
-						size: statusBarHeight,
-						visible: !this.stateModel.getRuntimeValue(LayoutStateKeys.STATUSBAR_HIDDEN)
+						gap: 0,
+						size: bottomSectionHeight,
+						data: [
+							{
+								// VERTICAL inner: stacks middle (above) and
+								// status bar (below) with the gap between
+								// them and only between them.
+								type: 'branch',
+								gap: WORKBENCH_LAYOUT_GAP,
+								size: width,
+								data: [
+									{
+										type: 'branch',
+										data: middleSection,
+										size: middleSectionHeight,
+										// Horizontal padding so the leftmost
+										// (activity bar) and rightmost
+										// (auxiliary bar) cards don't touch
+										// the window edges.
+										padding: WORKBENCH_LAYOUT_MIDDLE_PADDING
+									},
+									{
+										type: 'leaf',
+										data: { type: Parts.STATUSBAR_PART },
+										size: statusBarHeight,
+										visible: !this.stateModel.getRuntimeValue(LayoutStateKeys.STATUSBAR_HIDDEN)
+									}
+								]
+							}
+						]
 					}
 				]
 			},
