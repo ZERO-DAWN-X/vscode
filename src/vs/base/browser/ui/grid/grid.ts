@@ -762,6 +762,15 @@ export interface ISerializedBranchNode {
 	data: ISerializedNode[];
 	size: number;
 	visible?: boolean;
+	/**
+	 * Per-branch gap override. When set, this branch's {@link SplitView} uses
+	 * this gap instead of the {@link IGridOptions.gap grid-level default}.
+	 */
+	gap?: number;
+	/**
+	 * Per-branch edge padding override.
+	 */
+	padding?: number;
 }
 
 export type ISerializedNode = ISerializedLeafNode | ISerializedBranchNode;

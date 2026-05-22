@@ -14,9 +14,18 @@ import { mainWindow } from '../../base/browser/window.js';
 
 registerThemingParticipant((theme, collector) => {
 
-	// Background (helps for subpixel-antialiasing on Windows)
+	// Background (helps for subpixel-antialiasing on Windows). The title bar
+	// and activity bar share the same WORKBENCH_BACKGROUND so the workbench
+	// root and these two strip-shaped parts read as one continuous "void"
+	// surface behind the floating cards (side bar, panel, auxiliary bar).
+	// !important is needed to win over the inline backgrounds each part
+	// writes from its own updateStyles() method.
 	const workbenchBackground = WORKBENCH_BACKGROUND(theme);
-	collector.addRule(`.monaco-workbench { background-color: ${workbenchBackground}; }`);
+	collector.addRule(`
+		.monaco-workbench { background-color: ${workbenchBackground}; }
+		.monaco-workbench .part.titlebar { background-color: ${workbenchBackground} !important; }
+		.monaco-workbench .part.activitybar { background-color: ${workbenchBackground} !important; }
+	`);
 
 	// Selection (do NOT remove - https://github.com/microsoft/vscode/issues/169662)
 	const windowSelectionBackground = theme.getColor(selectionBackground);

@@ -137,6 +137,23 @@ export const TITLE_BAR_SETTINGS = [
 const DEFAULT_EMPTY_WINDOW_DIMENSIONS = new Dimension(DEFAULT_EMPTY_WINDOW_SIZE.width, DEFAULT_EMPTY_WINDOW_SIZE.height);
 const DEFAULT_WORKSPACE_WINDOW_DIMENSIONS = new Dimension(DEFAULT_WORKSPACE_WINDOW_SIZE.width, DEFAULT_WORKSPACE_WINDOW_SIZE.height);
 
+/**
+ * Pixel gap inserted between every adjacent pair of visible workbench parts in
+ * the main grid. The sash hit-area for each boundary sits inside this gap so
+ * resizing keeps working pixel-for-pixel. Set to `0` to restore the legacy
+ * flush layout.
+ */
+const WORKBENCH_LAYOUT_GAP = 4;
+
+/**
+ * Pixel padding applied to the start/end of the middle horizontal section
+ * (around the activity bar on the left and the auxiliary bar / chat panel on
+ * the right), so the cards float inset from the window edges instead of
+ * touching them. Matches WORKBENCH_LAYOUT_GAP so every void around the cards
+ * has the same width.
+ */
+const WORKBENCH_LAYOUT_MIDDLE_PADDING = 4;
+
 export abstract class Layout extends Disposable implements IWorkbenchLayoutService {
 
 	declare readonly _serviceBrand: undefined;
@@ -1635,7 +1652,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		const workbenchGrid = SerializableGrid.deserialize(
 			this.createGridDescriptor(),
 			{ fromJSON },
-			{ proportionalLayout: false }
+			{ proportionalLayout: false, gap: WORKBENCH_LAYOUT_GAP }
 		);
 
 		this.mainContainer.prepend(workbenchGrid.element);
@@ -2656,6 +2673,12 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			sideBar: sideBarNode
 		}, width, middleSectionHeight);
 
+		// Seamless symmetric layout: the outer vertical branch inherits the
+		// grid-level gap so every side of the middle cards gets the same
+		// breathing room — title bar to middle (top), middle to status bar
+		// (bottom), and the middle's own horizontal padding on the left/right
+		// edges. Activity bar / editor / aux bar all have a uniform N-px gap
+		// on all four sides.
 		const result: ISerializedGrid = {
 			root: {
 				type: 'branch',
@@ -2665,7 +2688,12 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 					{
 						type: 'branch',
 						data: middleSection,
-						size: middleSectionHeight
+						size: middleSectionHeight,
+						// Horizontal padding so the leftmost (activity bar) and
+						// rightmost (auxiliary bar) cards don't touch the
+						// window edges. Matches the grid-level gap value for
+						// visual consistency.
+						padding: WORKBENCH_LAYOUT_MIDDLE_PADDING
 					},
 					{
 						type: 'leaf',

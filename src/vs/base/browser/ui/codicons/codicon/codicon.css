@@ -23,3 +23,17 @@
 }
 
 /* icon rules are dynamically created by the platform theme service (see iconsStyleSheet.ts) */
+
+/* NuggetCode brand: render the `agent` codicon as the brand logo image instead of the font glyph.
+ * `1em` ties the image size to the codicon font-size so it scales in every context. */
+.codicon.codicon-agent::before {
+	content: '' !important;
+	display: inline-block;
+	width: 1em;
+	height: 1em;
+	background-image: url("./nugget-agent.png");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+	vertical-align: middle;
+}

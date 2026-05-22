@@ -648,15 +648,14 @@ class StatusbarPart extends Part implements IStatusbarEntryContainer {
 		// Update compact entries to refresh hover colors based on current theme
 		this.updateCompactEntries();
 
-		// Border color
+		// Border color is still resolved (it's used below for the focus outline
+		// offset and the notification beak), but the 1px top border itself is
+		// suppressed: in the cardified workbench the status bar reads as a
+		// floating card on the void, and the stroke would visually narrow the
+		// gap above it (between the middle section and the status bar).
 		const borderColor = this.getColor(styleOverride?.border ?? (this.contextService.getWorkbenchState() !== WorkbenchState.EMPTY ? STATUS_BAR_BORDER : STATUS_BAR_NO_FOLDER_BORDER)) || this.getColor(contrastBorder);
-		if (borderColor) {
-			container.classList.add('status-border-top');
-			container.style.setProperty('--status-border-top-color', borderColor);
-		} else {
-			container.classList.remove('status-border-top');
-			container.style.removeProperty('--status-border-top-color');
-		}
+		container.classList.remove('status-border-top');
+		container.style.removeProperty('--status-border-top-color');
 
 		// Colors and focus outlines via dynamic stylesheet
 

@@ -156,6 +156,19 @@ export interface ISerializedBranchNode {
 	data: ISerializedNode[];
 	size: number;
 	visible?: boolean;
+	/**
+	 * Per-branch gap override. When set, this branch's {@link SplitView} uses
+	 * this gap instead of the {@link IGridViewOptions.gap grid-level default}.
+	 * Useful for keeping a top-level container flush (`gap: 0`) while nested
+	 * branches still render with the configured gap.
+	 */
+	gap?: number;
+	/**
+	 * Per-branch edge padding override. When set, this branch's {@link SplitView}
+	 * uses this padding instead of the {@link IGridViewOptions.padding
+	 * grid-level default}.
+	 */
+	padding?: number;
 }
 
 export type ISerializedNode = ISerializedLeafNode | ISerializedBranchNode;
@@ -214,6 +227,20 @@ export interface IGridViewOptions {
 	 * @defaultValue `true`
 	 */
 	readonly proportionalLayout?: boolean; // default true
+
+	/**
+	 * The visual gap in pixels between adjacent visible views in every
+	 * {@link SplitView} of this {@link GridView}. Sashes are centered within
+	 * the gap so resize hit-areas remain correct. Defaults to `0`.
+	 */
+	readonly gap?: number;
+
+	/**
+	 * The symmetric edge padding in pixels applied to every {@link SplitView}
+	 * of this {@link GridView}. Per-branch overrides are possible via
+	 * {@link ISerializedBranchNode.padding}. Defaults to `0`.
+	 */
+	readonly padding?: number;
 }
 
 interface ILayoutContext {
@@ -413,6 +440,8 @@ class BranchNode implements ISplitView<ILayoutContext>, IDisposable {
 		readonly layoutController: LayoutController,
 		styles: IGridViewStyles,
 		readonly splitviewProportionalLayout: boolean,
+		readonly gap: number = 0,
+		readonly padding: number = 0,
 		size: number = 0,
 		orthogonalSize: number = 0,
 		edgeSnapping: boolean = false,
@@ -426,7 +455,7 @@ class BranchNode implements ISplitView<ILayoutContext>, IDisposable {
 
 		if (!childDescriptors) {
 			// Normal behavior, we have no children yet, just set up the splitview
-			this.splitview = new SplitView(this.element, { orientation, styles, proportionalLayout: splitviewProportionalLayout });
+			this.splitview = new SplitView(this.element, { orientation, styles, proportionalLayout: splitviewProportionalLayout, gap, padding });
 			this.splitview.layout(size, { orthogonalSize, absoluteOffset: 0, absoluteOrthogonalOffset: 0, absoluteSize: size, absoluteOrthogonalSize: orthogonalSize });
 		} else {
 			// Reconstruction behavior, we want to reconstruct a splitview
@@ -441,7 +470,7 @@ class BranchNode implements ISplitView<ILayoutContext>, IDisposable {
 				size: this.orthogonalSize
 			};
 
-			const options = { proportionalLayout: splitviewProportionalLayout, orientation, styles };
+			const options = { proportionalLayout: splitviewProportionalLayout, orientation, styles, gap, padding };
 
 			this.children = childDescriptors.map(c => c.node);
 			this.splitview = new SplitView(this.element, { ...options, descriptor });
@@ -951,7 +980,7 @@ function flipNode(node: LeafNode, size: number, orthogonalSize: number): LeafNod
 function flipNode(node: Node, size: number, orthogonalSize: number): Node;
 function flipNode(node: Node, size: number, orthogonalSize: number): Node {
 	if (node instanceof BranchNode) {
-		const result = new BranchNode(orthogonal(node.orientation), node.layoutController, node.styles, node.splitviewProportionalLayout, size, orthogonalSize, node.edgeSnapping);
+		const result = new BranchNode(orthogonal(node.orientation), node.layoutController, node.styles, node.splitviewProportionalLayout, node.gap, node.padding, size, orthogonalSize, node.edgeSnapping);
 
 		let totalSize = 0;
 
@@ -1047,6 +1076,8 @@ export class GridView implements IDisposable {
 
 	private styles: IGridViewStyles;
 	private proportionalLayout: boolean;
+	private readonly gap: number;
+	private readonly padding: number;
 	private _root!: BranchNode;
 	private onDidSashResetRelay = new Relay<GridLocation>();
 	private _onDidScroll = new Relay<void>();
@@ -1172,8 +1203,10 @@ export class GridView implements IDisposable {
 		this.element = $('.monaco-grid-view');
 		this.styles = options.styles || defaultStyles;
 		this.proportionalLayout = typeof options.proportionalLayout !== 'undefined' ? !!options.proportionalLayout : true;
+		this.gap = Math.max(0, options.gap ?? 0);
+		this.padding = Math.max(0, options.padding ?? 0);
 		this.layoutController = new LayoutController(false);
-		this.root = new BranchNode(Orientation.VERTICAL, this.layoutController, this.styles, this.proportionalLayout);
+		this.root = new BranchNode(Orientation.VERTICAL, this.layoutController, this.styles, this.proportionalLayout, this.gap, this.padding);
 	}
 
 	style(styles: IGridViewStyles): void {
@@ -1240,7 +1273,7 @@ export class GridView implements IDisposable {
 			const oldChild = grandParent.removeChild(parentIndex);
 			oldChild.dispose();
 
-			const newParent = new BranchNode(parent.orientation, parent.layoutController, this.styles, this.proportionalLayout, parent.size, parent.orthogonalSize, grandParent.edgeSnapping);
+			const newParent = new BranchNode(parent.orientation, parent.layoutController, this.styles, this.proportionalLayout, this.gap, this.padding, parent.size, parent.orthogonalSize, grandParent.edgeSnapping);
 			grandParent.addChild(newParent, parent.size, parentIndex);
 
 			const newSibling = new LeafNode(parent.view, grandParent.orientation, this.layoutController, parent.size);
@@ -1741,7 +1774,7 @@ export class GridView implements IDisposable {
 				} satisfies INodeDescriptor;
 			});
 
-			result = new BranchNode(orientation, this.layoutController, this.styles, this.proportionalLayout, node.size, orthogonalSize, undefined, children);
+			result = new BranchNode(orientation, this.layoutController, this.styles, this.proportionalLayout, node.gap ?? this.gap, node.padding ?? this.padding, node.size, orthogonalSize, undefined, children);
 		} else {
 			result = new LeafNode(deserializer.fromJSON(node.data), orientation, this.layoutController, orthogonalSize, node.size);
 			if (node.maximized && !this.maximizedNode) {

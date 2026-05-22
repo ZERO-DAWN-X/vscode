@@ -8,6 +8,53 @@
 	overflow: hidden;
 }
 
+/* Cardified middle parts: rounded corners so the gap between parts reads as a
+ * visual separator. Title bar, status bar, banner, and the activity bar stay
+ * square — title/status/banner align flush with the window edges, and the
+ * activity bar is meant to visually connect with adjacent parts (and with
+ * the unified void background) rather than float as its own card. */
+.monaco-workbench .part.sidebar,
+.monaco-workbench .part.editor,
+.monaco-workbench .part.panel,
+.monaco-workbench .part.auxiliarybar {
+	border-radius: 8px;
+}
+
+/* The gap between cardified parts already provides visual separation, so all
+ * the pre-existing edge decorations — 1px borders, drop shadows that hint at
+ * adjacency, the inset-shadow / pseudo-element tricks that drew "floating"
+ * outlines around the editor, and the positional borders on the panel — are
+ * redundant and clash with the rounded corners. Each part's updateStyles()
+ * writes some of these as inline styles, so !important is required to win. */
+.monaco-workbench .part.titlebar,
+.monaco-workbench .part.activitybar,
+.monaco-workbench .part.sidebar,
+.monaco-workbench .part.editor,
+.monaco-workbench .part.panel,
+.monaco-workbench .part.auxiliarybar,
+.monaco-workbench .part.statusbar {
+	border: none !important;
+	box-shadow: none !important;
+	outline: none !important;
+}
+
+/* Positional panel borders (panelpart.css sets these on .panel.top /.right
+ * /.left as longhand border-*-width which slips past the shorthand reset). */
+.monaco-workbench .part.panel.top,
+.monaco-workbench .part.panel.bottom,
+.monaco-workbench .part.panel.right,
+.monaco-workbench .part.panel.left {
+	border-width: 0 !important;
+}
+
+/* Pseudo-element overlays that drew edge separators on the activity bar and
+ * the editor's inset-shadow "depth" effect. The gap replaces them. */
+.monaco-workbench .activitybar.bordered::before,
+.monaco-workbench .part.editor::after,
+.monaco-workbench .part.editor::before {
+	display: none !important;
+}
+
 .monaco-workbench .part > .drop-block-overlay.visible {
 	visibility: visible;
 }

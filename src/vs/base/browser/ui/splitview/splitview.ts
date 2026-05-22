@@ -196,6 +196,20 @@ export interface ISplitViewOptions<TLayoutContext = undefined, TView extends IVi
 	 * Override the orthogonal size of sashes.
 	 */
 	readonly getSashOrthogonalSize?: () => number;
+
+	/**
+	 * The visual gap in pixels between adjacent visible views. Sashes are
+	 * centered within the gap so resize hit-areas remain correct. Defaults to `0`.
+	 */
+	readonly gap?: number;
+
+	/**
+	 * Symmetric padding in pixels at the start and end of the {@link SplitView}'s
+	 * primary axis. The first visible view begins at `padding`, the last visible
+	 * view ends at `size - padding`. Useful for floating the contained views
+	 * inset from the container's edges. Defaults to `0`.
+	 */
+	readonly padding?: number;
 }
 
 interface ISashEvent {
@@ -451,6 +465,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	private inverseAltBehavior: boolean;
 	private proportionalLayout: boolean;
 	private readonly getSashOrthogonalSize: { (): number } | undefined;
+	private readonly _gap: number;
+	private readonly _padding: number;
 
 	private _onDidSashChange = this._register(new Emitter<number>());
 	private _onDidSashReset = this._register(new Emitter<number>());
@@ -463,6 +479,38 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	 * The sum of all views' sizes.
 	 */
 	get contentSize(): number { return this._contentSize; }
+
+	/**
+	 * The visual gap in pixels between adjacent visible views.
+	 */
+	get gap(): number { return this._gap; }
+
+	/**
+	 * The symmetric edge padding in pixels at each end of the primary axis.
+	 */
+	get padding(): number { return this._padding; }
+
+	private getTotalGap(): number {
+		if (this._gap <= 0) {
+			return 0;
+		}
+
+		let visibleCount = 0;
+		for (const item of this.viewItems) {
+			if (item.visible) {
+				visibleCount++;
+			}
+		}
+
+		return Math.max(0, visibleCount - 1) * this._gap;
+	}
+
+	/**
+	 * The total amount of space (gaps + edge padding) that doesn't go to views.
+	 */
+	private getTotalReservedSpace(): number {
+		return this.getTotalGap() + this._padding * 2;
+	}
 
 	/**
 	 * Fires whenever the user resizes a {@link Sash sash}.
@@ -572,6 +620,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 		this.inverseAltBehavior = options.inverseAltBehavior ?? false;
 		this.proportionalLayout = options.proportionalLayout ?? true;
 		this.getSashOrthogonalSize = options.getSashOrthogonalSize;
+		this._gap = Math.max(0, options.gap ?? 0);
+		this._padding = Math.max(0, options.padding ?? 0);
 
 		this.el = document.createElement('div');
 		this.el.classList.add('monaco-split-view2');
@@ -839,7 +889,9 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	 * @param layoutContext An optional layout context to pass along to {@link IView views}.
 	 */
 	layout(size: number, layoutContext?: TLayoutContext): void {
-		const previousSize = Math.max(this.size, this._contentSize);
+		const totalReserved = this.getTotalReservedSpace();
+		const availableSize = Math.max(0, size - totalReserved);
+		const previousAvailableSize = Math.max(0, Math.max(this.size - totalReserved, this._contentSize));
 		this.size = size;
 		this.layoutContext = layoutContext;
 
@@ -848,9 +900,10 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 			const lowPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === LayoutPriority.Low);
 			const highPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === LayoutPriority.High);
 
-			this.resize(this.viewItems.length - 1, size - previousSize, undefined, lowPriorityIndexes, highPriorityIndexes);
+			this.resize(this.viewItems.length - 1, availableSize - previousAvailableSize, undefined, lowPriorityIndexes, highPriorityIndexes);
 		} else {
 			let total = 0;
+			let remainingSize = availableSize;
 
 			for (let i = 0; i < this.viewItems.length; i++) {
 				const item = this.viewItems[i];
@@ -859,7 +912,7 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 				if (typeof proportion === 'number') {
 					total += proportion;
 				} else {
-					size -= item.size;
+					remainingSize -= item.size;
 				}
 			}
 
@@ -868,7 +921,7 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 				const proportion = this.proportions[i];
 
 				if (typeof proportion === 'number' && total > 0) {
-					item.size = clamp(Math.round(proportion * size / total), item.minimumSize, item.maximumSize);
+					item.size = clamp(Math.round(proportion * remainingSize / total), item.minimumSize, item.maximumSize);
 				}
 			}
 		}
@@ -1045,7 +1098,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 
 			const item = this.viewItems[index];
 			size = Math.round(size);
-			size = clamp(size, item.minimumSize, Math.min(item.maximumSize, this.size));
+			const availableSize = Math.max(0, this.size - this.getTotalReservedSpace());
+			size = clamp(size, item.minimumSize, Math.min(item.maximumSize, availableSize));
 
 			item.size = size;
 			this.relayout(lowPriorityIndexes, highPriorityIndexes);
@@ -1161,10 +1215,13 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 			// Add sash
 			if (this.viewItems.length > 1) {
 				const opts = { orthogonalStartSash: this.orthogonalStartSash, orthogonalEndSash: this.orthogonalEndSash };
+				// When a gap is configured, size the sash to fully cover the gap so
+				// the entire visual separator is a draggable hit-area.
+				const sashSize = this._gap > 0 ? this._gap : undefined;
 
 				const sash = this.orientation === Orientation.VERTICAL
-					? new Sash(this.sashContainer, { getHorizontalSashTop: s => this.getSashPosition(s), getHorizontalSashWidth: this.getSashOrthogonalSize }, { ...opts, orientation: Orientation.HORIZONTAL })
-					: new Sash(this.sashContainer, { getVerticalSashLeft: s => this.getSashPosition(s), getVerticalSashHeight: this.getSashOrthogonalSize }, { ...opts, orientation: Orientation.VERTICAL });
+					? new Sash(this.sashContainer, { getHorizontalSashTop: s => this.getSashPosition(s), getHorizontalSashWidth: this.getSashOrthogonalSize }, { ...opts, orientation: Orientation.HORIZONTAL, size: sashSize })
+					: new Sash(this.sashContainer, { getVerticalSashLeft: s => this.getSashPosition(s), getVerticalSashHeight: this.getSashOrthogonalSize }, { ...opts, orientation: Orientation.VERTICAL, size: sashSize });
 
 				const sashEventMapper = this.orientation === Orientation.VERTICAL
 					? (e: IBaseSashEvent) => ({ sash, start: e.startY, current: e.currentY, alt: e.altKey })
@@ -1225,8 +1282,9 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 
 	private relayout(lowPriorityIndexes?: number[], highPriorityIndexes?: number[]): void {
 		const contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);
+		const availableSize = Math.max(0, this.size - this.getTotalReservedSpace());
 
-		this.resize(this.viewItems.length - 1, this.size - contentSize, undefined, lowPriorityIndexes, highPriorityIndexes);
+		this.resize(this.viewItems.length - 1, availableSize - contentSize, undefined, lowPriorityIndexes, highPriorityIndexes);
 		this.distributeEmptySpace();
 		this.layoutViews();
 		this.saveProportions();
@@ -1322,7 +1380,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 
 	private distributeEmptySpace(lowPriorityIndex?: number): void {
 		const contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);
-		let emptyDelta = this.size - contentSize;
+		const availableSize = Math.max(0, this.size - this.getTotalReservedSpace());
+		let emptyDelta = availableSize - contentSize;
 
 		const indexes = range(this.viewItems.length - 1, -1);
 		const lowPriorityIndexes = indexes.filter(i => this.viewItems[i].priority === LayoutPriority.Low);
@@ -1354,12 +1413,22 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 		// Save new content size
 		this._contentSize = this.viewItems.reduce((r, i) => r + i.size, 0);
 
-		// Layout views
-		let offset = 0;
+		// Layout views, inserting the configured gap between adjacent visible views.
+		// The first visible view starts at the edge padding offset.
+		let offset = this._padding;
+		let hasPreviousVisibleView = false;
 
 		for (const viewItem of this.viewItems) {
+			if (this._gap > 0 && viewItem.visible && hasPreviousVisibleView) {
+				offset += this._gap;
+			}
+
 			viewItem.layout(offset, this.layoutContext);
 			offset += viewItem.size;
+
+			if (viewItem.visible) {
+				hasPreviousVisibleView = true;
+			}
 		}
 
 		// Layout sashes
@@ -1369,15 +1438,16 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	}
 
 	private updateScrollableElement(): void {
+		const totalScrollSize = this._contentSize + this.getTotalReservedSpace();
 		if (this.orientation === Orientation.VERTICAL) {
 			this.scrollableElement.setScrollDimensions({
 				height: this.size,
-				scrollHeight: this._contentSize
+				scrollHeight: totalScrollSize
 			});
 		} else {
 			this.scrollableElement.setScrollDimensions({
 				width: this.size,
-				scrollWidth: this._contentSize
+				scrollWidth: totalScrollSize
 			});
 		}
 	}
@@ -1432,13 +1502,29 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	}
 
 	private getSashPosition(sash: Sash): number {
-		let position = 0;
+		let position = this._padding;
+		let hasPreviousVisibleView = false;
 
 		for (let i = 0; i < this.sashItems.length; i++) {
-			position += this.viewItems[i].size;
+			const item = this.viewItems[i];
+
+			if (this._gap > 0 && item.visible && hasPreviousVisibleView) {
+				position += this._gap;
+			}
+
+			position += item.size;
+
+			if (item.visible) {
+				hasPreviousVisibleView = true;
+			}
 
 			if (this.sashItems[i].sash === sash) {
-				return position;
+				// Center the sash in the gap when both sides have visible content,
+				// so the sash hit-area sits inside the visual separator instead of
+				// straddling a part edge.
+				const nextItem = this.viewItems[i + 1];
+				const centerInGap = this._gap > 0 && hasPreviousVisibleView && nextItem && nextItem.visible;
+				return position + (centerInGap ? this._gap / 2 : 0);
 			}
 		}
 
