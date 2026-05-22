@@ -94,11 +94,15 @@ body {
 }
 
 .monaco-workbench.border:not(.fullscreen) {
-	/* Window edge border suppressed: the cardified layout reads as a single
-	 * continuous "void" surface, and a colored 1px stroke around it conflicts
-	 * visually with the floating cards inside. Keep the .border class for
-	 * layout sizing semantics but render no visible stroke. */
 	box-sizing: border-box;
+	border: 1px solid var(--window-border-color);
+}
+
+/* Window edge border suppressed FOR THE MAIN WORKBENCH ONLY: the cardified
+ * layout reads as a single continuous "void" surface, and a colored 1px
+ * stroke around it conflicts visually with the floating cards inside.
+ * Sessions / agents window keeps its original border via the rule above. */
+.monaco-workbench.border:not(.fullscreen):not(.agent-sessions-workbench) {
 	border: 0 !important;
 }
 

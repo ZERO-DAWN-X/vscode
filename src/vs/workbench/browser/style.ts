@@ -20,11 +20,17 @@ registerThemingParticipant((theme, collector) => {
 	// surface behind the floating cards (side bar, panel, auxiliary bar).
 	// !important is needed to win over the inline backgrounds each part
 	// writes from its own updateStyles() method.
+	// IMPORTANT: the title bar / activity bar overrides are scoped with
+	// :not(.agent-sessions-workbench) so they only apply to the MAIN
+	// workbench. The sessions / agents window (src/vs/sessions/) also uses
+	// `.monaco-workbench` on its root but has its own intentional title bar
+	// and panel styling driven by sessions-specific theme tokens; forcing
+	// WORKBENCH_BACKGROUND on it would clobber those.
 	const workbenchBackground = WORKBENCH_BACKGROUND(theme);
 	collector.addRule(`
 		.monaco-workbench { background-color: ${workbenchBackground}; }
-		.monaco-workbench .part.titlebar { background-color: ${workbenchBackground} !important; }
-		.monaco-workbench .part.activitybar { background-color: ${workbenchBackground} !important; }
+		.monaco-workbench:not(.agent-sessions-workbench) .part.titlebar { background-color: ${workbenchBackground} !important; }
+		.monaco-workbench:not(.agent-sessions-workbench) .part.activitybar { background-color: ${workbenchBackground} !important; }
 	`);
 
 	// Selection (do NOT remove - https://github.com/microsoft/vscode/issues/169662)
