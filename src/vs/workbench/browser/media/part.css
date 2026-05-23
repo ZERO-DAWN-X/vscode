@@ -62,6 +62,65 @@
 	display: none !important;
 }
 
+/* === NuggetCode activity bar: creative active + hover states ===
+ * Replace the 2px left-border active indicator with a rounded
+ * brand-tinted background plus a small green accent pill on the edge.
+ * Hover items get a subtle neutral background tint. Scoped to the main
+ * workbench so the sessions / agents window is untouched. */
+
+/* Establish positioning context for our pseudo accents */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item {
+	position: relative;
+}
+
+/* Hide the original 2px border active indicator (both checked + focus) */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked .active-item-indicator:before,
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item:focus .active-item-indicator:before {
+	display: none !important;
+}
+
+/* Active item: rounded brand-green-tinted background */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked {
+	background-color: rgba(176, 214, 5, 0.12) !important;
+	border-radius: 8px;
+	transition: background-color 0.15s ease;
+}
+
+/* Hover (not currently active): subtle neutral tint */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar > .content :not(.monaco-menu) > .monaco-action-bar .action-item:hover:not(.checked) {
+	background-color: rgba(255, 255, 255, 0.06);
+	border-radius: 8px;
+	transition: background-color 0.1s ease;
+}
+
+/* Active item pill accent on the LEFT edge (when activity bar is on the left) */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar.left > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked::after {
+	content: "";
+	position: absolute;
+	left: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3px;
+	height: 55%;
+	background: #B0D605;
+	border-radius: 0 3px 3px 0;
+	pointer-events: none;
+}
+
+/* Active item pill accent on the RIGHT edge (when activity bar is on the right) */
+.monaco-workbench:not(.agent-sessions-workbench) .activitybar.right > .content :not(.monaco-menu) > .monaco-action-bar .action-item.checked::after {
+	content: "";
+	position: absolute;
+	right: 0;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 3px;
+	height: 55%;
+	background: #B0D605;
+	border-radius: 3px 0 0 3px;
+	pointer-events: none;
+}
+
 .monaco-workbench .part > .drop-block-overlay.visible {
 	visibility: visible;
 }
