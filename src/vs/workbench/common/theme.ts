@@ -20,7 +20,10 @@ export function WORKBENCH_BACKGROUND(theme: IColorTheme): Color {
 		case ColorScheme.HIGH_CONTRAST_DARK:
 			return Color.fromHex('#000000');
 		default:
-			return Color.fromHex('#252526');
+			// NuggetCode dark card color — applied to the title bar / activity
+			// bar via the style.ts injector so they read as a slightly raised
+			// layer above the editor/panels (which use #181D27).
+			return Color.fromHex('#232A35');
 	}
 }
 
