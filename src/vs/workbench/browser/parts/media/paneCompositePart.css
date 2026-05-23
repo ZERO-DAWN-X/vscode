@@ -409,3 +409,104 @@
 	margin: 12px;
 	text-align: center;
 }
+
+/* === Active activity-bar icon: remove bottom underline + color the glyph ===
+ * Scoped to the sidebar's and auxiliarybar's top activity-bar strip only.
+ *
+ * 1) Kill the bottom underline. sidebarpart.css applies a `border-top-color`
+ *    !important on `.active-item-indicator::before`. The pseudo itself is
+ *    drawn by paneCompositePart.css with `content: ""; border-top-width: 1px`.
+ *    Setting `content: none !important` on the pseudo removes the box
+ *    entirely, which kills the line regardless of the border-color override. */
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked .active-item-indicator::before,
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:focus .active-item-indicator::before,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked .active-item-indicator::before,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:focus .active-item-indicator::before {
+	content: none !important;
+	border: none !important;
+}
+
+/* 2) Color the active icon glyph with the brand green. !important is needed
+ *    because the composite bar's JS sets `color` inline on the action-label
+ *    and sidebarpart.css's hover/focus rules also use !important. Include
+ *    :hover and :focus variants so the color sticks across all interaction
+ *    states while the item is checked. */
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked .action-label,
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:hover .action-label,
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:focus .action-label,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked .action-label,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:hover .action-label,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked:focus .action-label {
+	color: var(--vscode-activityBarTop-activeBorder) !important;
+}
+
+/* 3) Bottom-rounded corners on the active icon's background. Top corners stay
+ *    flat so the bg flushes against the strip's top edge — reads like the
+ *    title bar bg is "dripping down" into a rounded tab around the icon.
+ *    SIDEBAR ONLY: auxiliarybar's chat panel moves the bg + rounding to the
+ *    actions-container wrapper so it covers both the icon AND the label. */
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked {
+	border-top-left-radius: 0 !important;
+	border-top-right-radius: 0 !important;
+	border-bottom-left-radius: 8px !important;
+	border-bottom-right-radius: 8px !important;
+}
+
+/* === Chat panel header: branded "NuggetCode" logo (icon + label) ===
+ *
+ * UX goals:
+ *   - Icon + label sit in ONE bottom-rounded pill — same visual treatment
+ *     as the sidebar's active tab, but wrapping both elements as a unit
+ *   - Label truncates with ellipsis if the panel narrows — never overflows
+ *   - No per-icon bg (would visually compete with the wrapper bg)
+ *
+ * Implementation:
+ *   - Strip the active-bg + rounding from .action-item.icon.checked in the
+ *     auxiliarybar (keep transparent so only the wrapper paints the bg)
+ *   - Paint the bg + bottom-rounded corners on .actions-container (the ul)
+ *   - Add "NuggetCode" via .actions-container::after as a flex sibling of
+ *     the icon li
+ *   - width:auto overrides actionbar.css's width:100% so the wrapper is
+ *     content-sized (not full strip width). max-width:100% + overflow:hidden
+ *     keep it from spilling past the panel edge. */
+
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.icon.checked {
+	background-color: transparent !important;
+	border-radius: 0 !important;
+}
+
+/* Make the intermediate .monaco-action-bar a flex container that fills the
+ * strip width and centers its content. Without this layer being explicitly
+ * flex+center, the centering on the outer .composite-bar doesn't propagate
+ * down to the actions-container (which is content-sized via width:auto). */
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar {
+	display: flex !important;
+	flex: 1 1 auto !important;
+	justify-content: center !important;
+	align-items: center !important;
+}
+
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar > .actions-container {
+	width: auto !important;
+	max-width: 100%;
+	overflow: hidden;
+}
+
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar > .actions-container::after {
+	content: "NuggetCode";
+	color: var(--vscode-activityBarTop-activeBorder);
+	font-family: inherit;
+	font-size: 13px;
+	font-weight: 600;
+	/* Negative margin pulls the text closer to the icon. The action-item's
+	 * right padding (6px) + label padding (2px) = 8px natural gap; pulling
+	 * back 2px leaves a ~6px gap between glyph and text. */
+	margin-left: -2px;
+	align-self: center;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+	flex-shrink: 1;
+	text-transform: none;
+}

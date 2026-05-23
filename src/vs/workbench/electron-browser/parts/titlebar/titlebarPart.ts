@@ -29,6 +29,7 @@ import { IEditorService } from '../../../services/editor/common/editorService.js
 import { IKeybindingService } from '../../../../platform/keybinding/common/keybinding.js';
 import { CodeWindow, mainWindow } from '../../../../base/browser/window.js';
 import { IsWindowAlwaysOnTopContext } from '../../../common/contextkeys.js';
+import { WORKBENCH_BACKGROUND } from '../../../common/theme.js';
 
 export class NativeTitlebarPart extends BrowserTitlebarPart {
 
@@ -255,15 +256,33 @@ export class NativeTitlebarPart extends BrowserTitlebarPart {
 		// Part container
 		if (this.element) {
 			if (useWindowControlsOverlay(this.configurationService)) {
+				// Resolve the WCO background from the theme directly (hex format)
+				// instead of reading it back from `element.style.backgroundColor`.
+				// Browsers normalize set hex values to `rgb(r, g, b)` when read
+				// back, and Electron's setTitleBarOverlay() can render rgb()
+				// strings with a subtly different shade than the equivalent hex
+				// it would otherwise receive — the WCO ends up a slightly
+				// darker color than the rest of the title bar. Passing the hex
+				// from WORKBENCH_BACKGROUND (the same source the browser side
+				// uses to paint the title bar bg) keeps them perfectly matched.
+				//
+				// This mirrors the fix applied for the sessions window in
+				// commit ea89f9c2a60 ("fix: resolve background color for window
+				// controls overlay in titlebar"). makeOpaque guards against
+				// any future theme that returns a translucent color.
+				const bgColor = WORKBENCH_BACKGROUND(this.theme).toString();
+				const fgColor = this.element.style.color;
+
 				if (
 					!this.cachedWindowControlStyles ||
-					this.cachedWindowControlStyles.bgColor !== this.element.style.backgroundColor ||
-					this.cachedWindowControlStyles.fgColor !== this.element.style.color
+					this.cachedWindowControlStyles.bgColor !== bgColor ||
+					this.cachedWindowControlStyles.fgColor !== fgColor
 				) {
+					this.cachedWindowControlStyles = { bgColor, fgColor };
 					this.nativeHostService.updateWindowControls({
 						targetWindowId: getWindowId(getWindow(this.element)),
-						backgroundColor: this.element.style.backgroundColor,
-						foregroundColor: this.element.style.color
+						backgroundColor: bgColor,
+						foregroundColor: fgColor
 					});
 				}
 			}

@@ -24,7 +24,7 @@
 .monaco-workbench:not(.agent-sessions-workbench) .part.editor,
 .monaco-workbench:not(.agent-sessions-workbench) .part.panel,
 .monaco-workbench:not(.agent-sessions-workbench) .part.auxiliarybar {
-	border-radius: 5px;
+	border-radius: 6px;
 }
 
 /* The gap between cardified parts already provides visual separation, so all
