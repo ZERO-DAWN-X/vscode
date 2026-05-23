@@ -15,7 +15,7 @@ const resourcesExplorerIcon = registerIcon('resources-explorer-editor-label-icon
 
 /**
  * Singleton editor input for the Resources Explorer. Modeled on
- * ProcessExplorerEditorInput — readonly, single instance, fixed resource URI
+ * ProcessExplorerEditorInput - readonly, single instance, fixed resource URI
  * so opening the same editor twice reuses the existing tab.
  */
 export class ResourcesExplorerEditorInput extends EditorInput {

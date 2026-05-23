@@ -216,7 +216,7 @@ class ResourcesExplorerStatusBarContribution extends Disposable implements IWork
 	}
 
 	private buildEntry(percent: number | undefined): IStatusbarEntry {
-		const text = percent === undefined ? '$(pulse) MEM —' : `$(pulse) MEM ${percent}%`;
+		const text = percent === undefined ? '$(pulse) MEM -' : `$(pulse) MEM ${percent}%`;
 		return {
 			name: localize('resourcesExplorer.statusName', "Resources"),
 			text,
@@ -225,7 +225,7 @@ class ResourcesExplorerStatusBarContribution extends Disposable implements IWork
 				: localize('resourcesExplorer.statusAria', "Memory usage: {0}%", percent),
 			tooltip: localize('resourcesExplorer.statusTooltip', "Open Resources Explorer"),
 			command: OpenResourcesExplorer.ID,
-			// Brand-green background with dark text — makes the indicator
+			// Brand-green background with dark text - makes the indicator
 			// pop in the status bar so it's easy to spot at a glance.
 			backgroundColor: '#B0D605',
 			color: '#181D27'

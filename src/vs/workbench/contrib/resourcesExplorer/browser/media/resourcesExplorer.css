@@ -4,16 +4,22 @@
  *--------------------------------------------------------------------------------------------*/
 
 /* === Resources Explorer ===
- * Scoped under .resources-explorer (the root container the control creates).
- * Reuses VS Code theme variables so it adapts to dark/light/HC themes.
- * Brand accents use the NuggetCode activity-bar-top-active-border token. */
+ * All rules scoped under `.resources-explorer`. Reuses VS Code theme tokens
+ * for bg/fg + brand-green for accents and category dots. */
 
 .resources-explorer {
+	/* Category color palette (used for dots + bar segments) */
+	--re-cat-editor: #f5c542;        /* yellow */
+	--re-cat-extension: #b48cff;     /* purple */
+	--re-cat-terminal: #4ea3f0;      /* blue */
+	--re-cat-other: #88b04b;         /* green */
+	--re-cat-non-nuggetcode: #6b7280;/* gray */
+
 	display: flex;
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	padding: 16px 20px;
+	padding: 16px 20px 12px;
 	box-sizing: border-box;
 	font-size: 13px;
 	color: var(--vscode-foreground);
@@ -21,27 +27,31 @@
 	overflow: auto;
 }
 
-/* --- Tab strip --- */
+/* --- Top bar: tab strip + right-aligned actions --- */
+
+.resources-explorer .re-topbar {
+	display: flex;
+	align-items: center;
+	margin-bottom: 14px;
+}
 
 .resources-explorer .re-tabs {
 	display: flex;
 	gap: 4px;
-	margin-bottom: 16px;
-	border-bottom: 1px solid var(--vscode-panel-border);
+	flex: 1;
 }
 
 .resources-explorer .re-tab {
 	background: transparent;
 	border: none;
 	color: var(--vscode-descriptionForeground);
-	padding: 8px 14px;
+	padding: 6px 14px;
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
-	border-bottom: 2px solid transparent;
-	margin-bottom: -1px;
-	transition: color 0.15s ease, border-color 0.15s ease;
+	border-radius: 6px;
 	font-family: inherit;
+	transition: color 0.15s ease, background 0.15s ease;
 }
 
 .resources-explorer .re-tab:hover {
@@ -50,12 +60,27 @@
 
 .resources-explorer .re-tab.active {
 	color: var(--vscode-foreground);
-	border-bottom-color: var(--vscode-activityBarTop-activeBorder);
+	background: var(--vscode-editorWidget-background);
 }
 
 .resources-explorer .re-tab:focus-visible {
 	outline: 1px solid var(--vscode-focusBorder);
-	outline-offset: -2px;
+	outline-offset: 2px;
+}
+
+.resources-explorer .re-topbar-right {
+	display: flex;
+	gap: 14px;
+}
+
+.resources-explorer .re-link {
+	color: var(--vscode-textLink-foreground);
+	font-size: 12px;
+	text-decoration: none;
+}
+
+.resources-explorer .re-link:hover {
+	text-decoration: underline;
 }
 
 /* --- Status banner --- */
@@ -65,15 +90,9 @@
 	align-items: center;
 	gap: 8px;
 	padding: 10px 14px;
-	border-radius: 6px;
-	background: rgba(176, 214, 5, 0.08);
-	border: 1px solid rgba(176, 214, 5, 0.20);
-	margin-bottom: 16px;
-}
-
-.resources-explorer .re-status-banner.warning {
-	background: rgba(255, 165, 0, 0.08);
-	border-color: rgba(255, 165, 0, 0.30);
+	border-radius: 8px;
+	background: var(--vscode-editorWidget-background);
+	margin-bottom: 14px;
 }
 
 .resources-explorer .re-status-banner .codicon {
@@ -104,7 +123,16 @@
 	display: block;
 }
 
-/* --- Overview: 3-column summary cards --- */
+/* --- Generic card --- */
+
+.resources-explorer .re-card {
+	background: var(--vscode-editorWidget-background);
+	border-radius: 8px;
+	padding: 16px 18px;
+	margin-bottom: 14px;
+}
+
+/* --- Overview: 3-column grid of summary cards --- */
 
 .resources-explorer .re-overview-grid {
 	display: grid;
@@ -112,55 +140,436 @@
 	gap: 14px;
 }
 
-.resources-explorer .re-card {
-	background: var(--vscode-editorWidget-background);
-	border: 1px solid var(--vscode-widget-border, transparent);
-	border-radius: 8px;
-	padding: 16px 18px;
-	min-height: 96px;
+.resources-explorer .re-overview-card {
 	display: flex;
 	flex-direction: column;
 	gap: 10px;
+	margin-bottom: 0;
 }
 
 .resources-explorer .re-card-header {
 	display: flex;
 	align-items: center;
+	gap: 8px;
+}
+
+.resources-explorer .re-card-icon {
+	color: var(--vscode-descriptionForeground);
+	font-size: 14px;
 }
 
 .resources-explorer .re-card-title {
-	font-size: 11px;
-	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--vscode-foreground);
+	flex: 1;
+}
+
+.resources-explorer .re-card-chevron {
 	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+}
+
+.resources-explorer .re-card-value-row {
+	display: flex;
+	align-items: baseline;
+	gap: 14px;
 }
 
 .resources-explorer .re-card-value {
-	font-size: 28px;
+	font-size: 30px;
 	font-weight: 600;
 	color: var(--vscode-foreground);
 	font-variant-numeric: tabular-nums;
+	line-height: 1;
 }
 
-/* --- Detail panels (CPU & Memory, Disk, Network) --- */
+.resources-explorer .re-card-subtext {
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+}
 
-.resources-explorer .re-detail-panel {
-	background: var(--vscode-editorWidget-background);
-	border: 1px solid var(--vscode-widget-border, transparent);
-	border-radius: 8px;
-	padding: 16px 18px;
-	margin-bottom: 14px;
+.resources-explorer .re-card-section-label {
+	font-size: 11px;
+	font-weight: 500;
+	color: var(--vscode-descriptionForeground);
+	margin-top: 4px;
+}
+
+.resources-explorer .re-card-rows {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.resources-explorer .re-cat-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12px;
+	padding: 2px 0;
+}
+
+.resources-explorer .re-cat-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.resources-explorer .re-cat-label {
+	flex: 1;
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-cat-value {
+	color: var(--vscode-descriptionForeground);
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Split layout (CPU & Memory, Disk tabs) --- */
+
+.resources-explorer .re-split {
+	display: grid;
+	grid-template-columns: 320px 1fr;
+	gap: 14px;
+}
+
+.resources-explorer .re-split-left,
+.resources-explorer .re-split-right {
+	min-width: 0;
+}
+
+/* Detail header + sub-text + bar (used in left panels of CPU & Memory and Disk) */
+
+.resources-explorer .re-detail-header {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--vscode-foreground);
+	margin-bottom: 6px;
+}
+
+.resources-explorer .re-detail-header .codicon {
+	color: var(--vscode-descriptionForeground);
 }
 
 .resources-explorer .re-detail-title {
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-detail-subtext {
+	font-size: 12px;
+	color: var(--vscode-descriptionForeground);
+	margin-bottom: 12px;
+}
+
+.resources-explorer .re-bar-track {
+	height: 6px;
+	background: rgba(255, 255, 255, 0.06);
+	border-radius: 3px;
+	overflow: hidden;
+	margin-bottom: 14px;
+}
+
+.resources-explorer .re-bar-fill {
+	height: 100%;
+	background: linear-gradient(to right, #B0D605, #88a604);
+	border-radius: 3px;
+	transition: width 0.3s ease;
+}
+
+/* --- CPU & Memory: right side (sub-tabs + process table) --- */
+
+.resources-explorer .re-subtabs {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	background: var(--vscode-editorWidget-background);
+	padding: 8px;
+	border-radius: 8px 8px 0 0;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.resources-explorer .re-subtab {
+	background: transparent;
+	border: none;
+	color: var(--vscode-descriptionForeground);
+	padding: 5px 12px;
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	border-radius: 5px;
+	font-family: inherit;
+	transition: color 0.15s ease, background 0.15s ease;
+}
+
+.resources-explorer .re-subtab:hover {
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-subtab.active {
+	color: var(--vscode-foreground);
+	background: var(--vscode-editor-background);
+}
+
+.resources-explorer .re-subtabs-right {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+}
+
+.resources-explorer .re-checkbox-label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	color: var(--vscode-descriptionForeground);
+	cursor: pointer;
+}
+
+.resources-explorer .re-checkbox-label input[type="checkbox"] {
+	cursor: pointer;
+}
+
+/* Process table */
+
+.resources-explorer .re-table-wrap {
+	background: var(--vscode-editorWidget-background);
+	border-radius: 0 0 8px 8px;
+	overflow: hidden;
+}
+
+.resources-explorer .re-table-header {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 80px 130px 80px;
+	gap: 12px;
+	padding: 10px 14px;
 	font-size: 11px;
 	font-weight: 600;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
 	color: var(--vscode-descriptionForeground);
-	margin-bottom: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
+
+.resources-explorer .re-th {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+.resources-explorer .re-th-cpu,
+.resources-explorer .re-th-pid {
+	justify-content: flex-end;
+}
+
+.resources-explorer .re-th .codicon {
+	font-size: 10px;
+}
+
+.resources-explorer .re-table-body {
+	max-height: 600px;
+	overflow-y: auto;
+}
+
+.resources-explorer .re-tr {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 80px 130px 80px;
+	gap: 12px;
+	padding: 8px 14px;
+	align-items: center;
+	font-size: 13px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.resources-explorer .re-tr:hover {
+	background: rgba(255, 255, 255, 0.025);
+}
+
+.resources-explorer .re-td {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.resources-explorer .re-td-name {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.resources-explorer .re-row-icon {
+	color: var(--vscode-descriptionForeground);
+	font-size: 14px;
+	flex-shrink: 0;
+}
+
+.resources-explorer .re-row-name {
+	font-weight: 500;
+	color: var(--vscode-foreground);
+	flex-shrink: 0;
+}
+
+.resources-explorer .re-row-cmd {
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+
+.resources-explorer .re-td-cpu,
+.resources-explorer .re-td-mem,
+.resources-explorer .re-td-pid {
+	text-align: right;
+	font-variant-numeric: tabular-nums;
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-empty-row {
+	padding: 18px;
+	text-align: center;
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+}
+
+/* --- Disk tab: detail cards on the right --- */
+
+.resources-explorer .re-disk-detail-cards {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.resources-explorer .re-disk-detail-card {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 14px 16px;
+	background: var(--vscode-editorWidget-background);
+	border-radius: 8px;
+	cursor: default;
+	transition: background 0.15s ease;
+}
+
+.resources-explorer .re-disk-detail-card:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+
+.resources-explorer .re-disk-icon {
+	color: var(--vscode-descriptionForeground);
+	font-size: 18px;
+}
+
+.resources-explorer .re-disk-info {
+	flex: 1;
+	min-width: 0;
+}
+
+.resources-explorer .re-disk-name {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-disk-size {
+	font-size: 12px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.resources-explorer .re-disk-chevron {
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+}
+
+/* --- Network tab --- */
+
+.resources-explorer .re-network-toprow {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 14px;
+}
+
+.resources-explorer .re-button {
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	border: none;
+	padding: 6px 12px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	font-family: inherit;
+}
+
+.resources-explorer .re-button:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.resources-explorer .re-network-lastdiag {
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+	margin-left: auto;
+}
+
+.resources-explorer .re-network-sections {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+/* --- Collapsible sections --- */
+
+.resources-explorer .re-collapsible {
+	background: var(--vscode-editorWidget-background);
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.resources-explorer .re-collapsible-header {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 14px 16px;
+	cursor: pointer;
+	user-select: none;
+}
+
+.resources-explorer .re-collapsible-status {
+	color: var(--vscode-activityBarTop-activeBorder);
+	font-size: 14px;
+}
+
+.resources-explorer .re-collapsible-title {
+	flex: 1;
+	font-weight: 500;
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-collapsible-chevron {
+	color: var(--vscode-descriptionForeground);
+	font-size: 12px;
+	transition: transform 0.18s ease;
+}
+
+.resources-explorer .re-collapsible.expanded .re-collapsible-chevron {
+	transform: rotate(180deg);
+}
+
+.resources-explorer .re-collapsible-body {
+	display: none;
+	padding: 0 16px 14px;
+}
+
+.resources-explorer .re-collapsible.expanded .re-collapsible-body {
+	display: block;
+}
+
+/* --- Detail rows (network / shared) --- */
 
 .resources-explorer .re-detail-row {
 	display: flex;
