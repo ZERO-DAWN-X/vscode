@@ -143,7 +143,7 @@ const DEFAULT_WORKSPACE_WINDOW_DIMENSIONS = new Dimension(DEFAULT_WORKSPACE_WIND
  * resizing keeps working pixel-for-pixel. Set to `0` to restore the legacy
  * flush layout.
  */
-const WORKBENCH_LAYOUT_GAP = 4;
+const WORKBENCH_LAYOUT_GAP = 5;
 
 /**
  * Pixel padding applied to the start/end of the middle horizontal section
@@ -152,7 +152,7 @@ const WORKBENCH_LAYOUT_GAP = 4;
  * touching them. Matches WORKBENCH_LAYOUT_GAP so every void around the cards
  * has the same width.
  */
-const WORKBENCH_LAYOUT_MIDDLE_PADDING = 4;
+const WORKBENCH_LAYOUT_MIDDLE_PADDING = 5;
 
 export abstract class Layout extends Disposable implements IWorkbenchLayoutService {
 
