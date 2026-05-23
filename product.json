@@ -194,6 +194,12 @@
 	],
 	"onboardingThemes": [
 		{
+			"id": "nuggetcode-theme",
+			"label": "NuggetCode-Theme",
+			"themeId": "NuggetCode-Theme",
+			"type": "dark"
+		},
+		{
 			"id": "dark-2026",
 			"label": "Dark 2026",
 			"themeId": "Dark 2026",
