@@ -290,6 +290,9 @@ import './contrib/markers/browser/markers.contribution.js';
 // Process Explorer
 import './contrib/processExplorer/browser/processExplorer.contribution.js';
 
+// Resources Explorer (status bar MEM indicator → opens Process Explorer)
+import './contrib/resourcesExplorer/browser/resourcesExplorer.contribution.js';
+
 // Merge Editor
 import './contrib/mergeEditor/browser/mergeEditor.contribution.js';
 

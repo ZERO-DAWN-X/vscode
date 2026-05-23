@@ -1,0 +1,190 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* === Resources Explorer ===
+ * Scoped under .resources-explorer (the root container the control creates).
+ * Reuses VS Code theme variables so it adapts to dark/light/HC themes.
+ * Brand accents use the NuggetCode activity-bar-top-active-border token. */
+
+.resources-explorer {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	width: 100%;
+	padding: 16px 20px;
+	box-sizing: border-box;
+	font-size: 13px;
+	color: var(--vscode-foreground);
+	background: var(--vscode-editor-background);
+	overflow: auto;
+}
+
+/* --- Tab strip --- */
+
+.resources-explorer .re-tabs {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 16px;
+	border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.resources-explorer .re-tab {
+	background: transparent;
+	border: none;
+	color: var(--vscode-descriptionForeground);
+	padding: 8px 14px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	border-bottom: 2px solid transparent;
+	margin-bottom: -1px;
+	transition: color 0.15s ease, border-color 0.15s ease;
+	font-family: inherit;
+}
+
+.resources-explorer .re-tab:hover {
+	color: var(--vscode-foreground);
+}
+
+.resources-explorer .re-tab.active {
+	color: var(--vscode-foreground);
+	border-bottom-color: var(--vscode-activityBarTop-activeBorder);
+}
+
+.resources-explorer .re-tab:focus-visible {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: -2px;
+}
+
+/* --- Status banner --- */
+
+.resources-explorer .re-status-banner {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 10px 14px;
+	border-radius: 6px;
+	background: rgba(176, 214, 5, 0.08);
+	border: 1px solid rgba(176, 214, 5, 0.20);
+	margin-bottom: 16px;
+}
+
+.resources-explorer .re-status-banner.warning {
+	background: rgba(255, 165, 0, 0.08);
+	border-color: rgba(255, 165, 0, 0.30);
+}
+
+.resources-explorer .re-status-banner .codicon {
+	color: var(--vscode-activityBarTop-activeBorder);
+	font-size: 14px;
+}
+
+.resources-explorer .re-status-banner.warning .codicon {
+	color: var(--vscode-editorWarning-foreground);
+}
+
+.resources-explorer .re-status-text {
+	color: var(--vscode-foreground);
+}
+
+/* --- Tab bodies --- */
+
+.resources-explorer .re-tab-bodies {
+	flex: 1;
+	min-height: 0;
+}
+
+.resources-explorer .re-tab-body {
+	display: none;
+}
+
+.resources-explorer .re-tab-body.active {
+	display: block;
+}
+
+/* --- Overview: 3-column summary cards --- */
+
+.resources-explorer .re-overview-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 14px;
+}
+
+.resources-explorer .re-card {
+	background: var(--vscode-editorWidget-background);
+	border: 1px solid var(--vscode-widget-border, transparent);
+	border-radius: 8px;
+	padding: 16px 18px;
+	min-height: 96px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.resources-explorer .re-card-header {
+	display: flex;
+	align-items: center;
+}
+
+.resources-explorer .re-card-title {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--vscode-descriptionForeground);
+}
+
+.resources-explorer .re-card-value {
+	font-size: 28px;
+	font-weight: 600;
+	color: var(--vscode-foreground);
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Detail panels (CPU & Memory, Disk, Network) --- */
+
+.resources-explorer .re-detail-panel {
+	background: var(--vscode-editorWidget-background);
+	border: 1px solid var(--vscode-widget-border, transparent);
+	border-radius: 8px;
+	padding: 16px 18px;
+	margin-bottom: 14px;
+}
+
+.resources-explorer .re-detail-title {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--vscode-descriptionForeground);
+	margin-bottom: 10px;
+}
+
+.resources-explorer .re-detail-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+	color: var(--vscode-foreground);
+	font-size: 13px;
+}
+
+.resources-explorer .re-key {
+	color: var(--vscode-descriptionForeground);
+	min-width: 110px;
+}
+
+.resources-explorer .re-value {
+	color: var(--vscode-foreground);
+	font-variant-numeric: tabular-nums;
+}
+
+.resources-explorer .re-value-good {
+	color: var(--vscode-activityBarTop-activeBorder);
+}
+
+.resources-explorer .re-value-bad {
+	color: var(--vscode-errorForeground);
+}
