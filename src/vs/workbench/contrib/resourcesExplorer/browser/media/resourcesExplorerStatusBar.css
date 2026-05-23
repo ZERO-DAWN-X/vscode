@@ -1,0 +1,11 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* Bold the Resources Explorer status bar entry text so the brand-green
+ * MEM% indicator pops in the status bar at a glance. Targeted by ID so
+ * it doesn't affect any other status bar items. */
+.monaco-workbench .statusbar-item[id="status.resourcesExplorer"] {
+	font-weight: 600;
+}
