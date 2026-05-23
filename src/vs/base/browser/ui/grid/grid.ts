@@ -771,6 +771,11 @@ export interface ISerializedBranchNode {
 	 * Per-branch edge padding override.
 	 */
 	padding?: number;
+	/**
+	 * Per-branch asymmetric padding overrides. Each falls back to {@link padding}.
+	 */
+	paddingStart?: number;
+	paddingEnd?: number;
 }
 
 export type ISerializedNode = ISerializedLeafNode | ISerializedBranchNode;

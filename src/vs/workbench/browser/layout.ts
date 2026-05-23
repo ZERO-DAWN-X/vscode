@@ -2677,53 +2677,106 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			sideBar: sideBarNode
 		}, width, middleSectionHeight);
 
-		// Asymmetric vertical layout: title bar sits flush against the middle
-		// section (NO gap below title bar), while a gap is inserted between
-		// the middle section and the status bar (BOTTOM gap only).
+		// Activity bar flush + asymmetric vertical layout:
+		//   - Title bar sits flush against middle (NO top gap).
+		//   - Activity bar is flush left AND flush right (no padding/gap
+		//     around it). It touches the window edge on the side it hugs and
+		//     the next card (sidebar/editor) on the other side.
+		//   - Side bar / editor / auxiliary bar carry the inter-card gaps and
+		//     the outer padding on the side opposite the activity bar.
+		//   - Bottom gap separates middle from status bar.
 		//
-		// Because branch orientations alternate (outer VERTICAL → child
-		// HORIZONTAL → grandchild VERTICAL), achieving a bottom-only gap
-		// requires wrapping middle + status bar in a vertical sub-branch,
-		// which in turn must be wrapped in a single-child horizontal branch
-		// to satisfy the alternation rule.
+		// arrangeMiddleSectionNodes() places activity bar at index 0 when
+		// the side bar is on the LEFT (so activity bar is the leftmost), and
+		// at the LAST index when side bar is on the RIGHT. We only restructure
+		// when activity bar is at one of those two well-defined edge positions
+		// AND it is visible; otherwise we fall back to the simple symmetric
+		// middle to avoid surprising layouts.
+		const isActivityBarLeafAt = (index: number): boolean => {
+			const node = middleSection[index];
+			if (!node || node.type !== 'leaf') {
+				return false;
+			}
+			const leafData = (node as ISerializedLeafNode).data as { type?: Parts } | undefined;
+			return leafData?.type === Parts.ACTIVITYBAR_PART;
+		};
+		const middleHasEdgeActivityBar =
+			middleSection.length > 1 &&
+			(isActivityBarLeafAt(0) || isActivityBarLeafAt(middleSection.length - 1));
+		const activityBarVisibleInMiddle = middleHasEdgeActivityBar && !this.stateModel.getRuntimeValue(LayoutStateKeys.ACTIVITYBAR_HIDDEN);
+
+		let middleBranchDescriptor: ISerializedNode;
+		if (activityBarVisibleInMiddle) {
+			const activityBarAtStart = isActivityBarLeafAt(0);
+			const activityBarNodeFromMiddle = activityBarAtStart ? middleSection[0] : middleSection[middleSection.length - 1];
+			const restOfMiddle = activityBarAtStart ? middleSection.slice(1) : middleSection.slice(0, -1);
+
+			// HORIZONTAL "rest of middle" — owns the inter-card gap (between
+			// side bar / editor / aux bar) and the outer padding on the side
+			// opposite the activity bar. The side facing the activity bar
+			// has padding = 0 so the first card stays flush against it.
+			const restInner: ISerializedNode = {
+				type: 'branch',
+				gap: WORKBENCH_LAYOUT_GAP,
+				paddingStart: activityBarAtStart ? 0 : WORKBENCH_LAYOUT_MIDDLE_PADDING,
+				paddingEnd: activityBarAtStart ? WORKBENCH_LAYOUT_MIDDLE_PADDING : 0,
+				size: middleSectionHeight,
+				data: restOfMiddle
+			};
+			// VERTICAL single-child wrapper so the next branch (restInner)
+			// can be HORIZONTAL by alternation.
+			const restWrapper: ISerializedNode = {
+				type: 'branch',
+				gap: 0,
+				size: width - activityBarNodeFromMiddle.size,
+				data: [restInner]
+			};
+			// HORIZONTAL middle branch: [activityBar, restWrapper] or the
+			// mirror when activity bar is on the right. gap=0, padding=0 so
+			// activity bar is flush against both the window edge and the
+			// wrapper.
+			middleBranchDescriptor = {
+				type: 'branch',
+				gap: 0,
+				padding: 0,
+				size: middleSectionHeight,
+				data: activityBarAtStart ? [activityBarNodeFromMiddle, restWrapper] : [restWrapper, activityBarNodeFromMiddle]
+			};
+		} else {
+			// Fallback: simple symmetric middle with padding on both sides.
+			middleBranchDescriptor = {
+				type: 'branch',
+				data: middleSection,
+				size: middleSectionHeight,
+				padding: WORKBENCH_LAYOUT_MIDDLE_PADDING
+			};
+		}
+
+		// Asymmetric outer vertical layout (top flush, bottom gap). Because
+		// branch orientations alternate (outer VERTICAL → child HORIZONTAL →
+		// grandchild VERTICAL), achieving a bottom-only gap requires wrapping
+		// middle + status bar in a vertical sub-branch, which in turn must be
+		// wrapped in a single-child horizontal branch to satisfy alternation.
 		const bottomSectionHeight = middleSectionHeight + WORKBENCH_LAYOUT_GAP + statusBarHeight;
 
 		const result: ISerializedGrid = {
 			root: {
 				type: 'branch',
 				size: width,
-				// Title bar + banner sit flush against the inner bottom
-				// section — no top gap.
 				gap: 0,
 				data: [
 					...(this.shouldShowBannerFirst() ? titleAndBanner.reverse() : titleAndBanner),
 					{
-						// HORIZONTAL single-child wrapper — only here to
-						// satisfy the alternating-orientation rule so the
-						// next branch can be VERTICAL and own the
-						// bottom-only gap.
 						type: 'branch',
 						gap: 0,
 						size: bottomSectionHeight,
 						data: [
 							{
-								// VERTICAL inner: stacks middle (above) and
-								// status bar (below) with the gap between
-								// them and only between them.
 								type: 'branch',
 								gap: WORKBENCH_LAYOUT_GAP,
 								size: width,
 								data: [
-									{
-										type: 'branch',
-										data: middleSection,
-										size: middleSectionHeight,
-										// Horizontal padding so the leftmost
-										// (activity bar) and rightmost
-										// (auxiliary bar) cards don't touch
-										// the window edges.
-										padding: WORKBENCH_LAYOUT_MIDDLE_PADDING
-									},
+									middleBranchDescriptor,
 									{
 										type: 'leaf',
 										data: { type: Parts.STATUSBAR_PART },

@@ -207,9 +207,23 @@ export interface ISplitViewOptions<TLayoutContext = undefined, TView extends IVi
 	 * Symmetric padding in pixels at the start and end of the {@link SplitView}'s
 	 * primary axis. The first visible view begins at `padding`, the last visible
 	 * view ends at `size - padding`. Useful for floating the contained views
-	 * inset from the container's edges. Defaults to `0`.
+	 * inset from the container's edges. Defaults to `0`. When asymmetric
+	 * padding is needed, prefer {@link paddingStart} / {@link paddingEnd}.
 	 */
 	readonly padding?: number;
+
+	/**
+	 * Padding in pixels at the START of the primary axis (left for horizontal
+	 * splitviews, top for vertical). Falls back to {@link padding} when not set.
+	 */
+	readonly paddingStart?: number;
+
+	/**
+	 * Padding in pixels at the END of the primary axis (right for horizontal
+	 * splitviews, bottom for vertical). Falls back to {@link padding} when not
+	 * set.
+	 */
+	readonly paddingEnd?: number;
 }
 
 interface ISashEvent {
@@ -467,6 +481,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	private readonly getSashOrthogonalSize: { (): number } | undefined;
 	private readonly _gap: number;
 	private readonly _padding: number;
+	private readonly _paddingStart: number;
+	private readonly _paddingEnd: number;
 
 	private _onDidSashChange = this._register(new Emitter<number>());
 	private _onDidSashReset = this._register(new Emitter<number>());
@@ -489,6 +505,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	 * The symmetric edge padding in pixels at each end of the primary axis.
 	 */
 	get padding(): number { return this._padding; }
+	get paddingStart(): number { return this._paddingStart; }
+	get paddingEnd(): number { return this._paddingEnd; }
 
 	private getTotalGap(): number {
 		if (this._gap <= 0) {
@@ -509,7 +527,7 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	 * The total amount of space (gaps + edge padding) that doesn't go to views.
 	 */
 	private getTotalReservedSpace(): number {
-		return this.getTotalGap() + this._padding * 2;
+		return this.getTotalGap() + this._paddingStart + this._paddingEnd;
 	}
 
 	/**
@@ -622,6 +640,8 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 		this.getSashOrthogonalSize = options.getSashOrthogonalSize;
 		this._gap = Math.max(0, options.gap ?? 0);
 		this._padding = Math.max(0, options.padding ?? 0);
+		this._paddingStart = Math.max(0, options.paddingStart ?? this._padding);
+		this._paddingEnd = Math.max(0, options.paddingEnd ?? this._padding);
 
 		this.el = document.createElement('div');
 		this.el.classList.add('monaco-split-view2');
@@ -1415,7 +1435,7 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 
 		// Layout views, inserting the configured gap between adjacent visible views.
 		// The first visible view starts at the edge padding offset.
-		let offset = this._padding;
+		let offset = this._paddingStart;
 		let hasPreviousVisibleView = false;
 
 		for (const viewItem of this.viewItems) {
@@ -1502,7 +1522,7 @@ export class SplitView<TLayoutContext = undefined, TView extends IView<TLayoutCo
 	}
 
 	private getSashPosition(sash: Sash): number {
-		let position = this._padding;
+		let position = this._paddingStart;
 		let hasPreviousVisibleView = false;
 
 		for (let i = 0; i < this.sashItems.length; i++) {
