@@ -53,7 +53,49 @@
 
 .monaco-workbench .pane-composite-part > .header-or-footer .composite-bar-container {
 	flex: 1;
-	justify-content: center;
+}
+
+/* Shrink the activity-bar / chat-header strip to match the 32x32 icon item.
+ * Part.css gives every `.part > .header-or-footer` a default height of 35px,
+ * which leaves a ~1.5px gap above and below the icon's 32x32 active background
+ * (align-items: center splits the extra 3px). Matching strip height to icon
+ * height makes the active bg sit flush against the strip's top and bottom. */
+.monaco-workbench .part.sidebar > .header-or-footer,
+.monaco-workbench .part.auxiliarybar > .header-or-footer {
+	height: 32px;
+}
+
+/* Center icons in the TOP activity bar strip — applies to both the sidebar
+ * (which hosts the global activity bar items when at top) and the auxiliary
+ * bar (chat panel header). Panel (.part.panel) is intentionally excluded so
+ * the bottom panel's tab strip keeps its left-aligned layout.
+ *
+ * Approach:
+ *   Make `.composite-bar` itself a flex container that fills the strip
+ *   (`flex: 1`) and centers its content (`justify-content: center`). The
+ *   `.monaco-action-bar` child is content-sized in flex by default, so the
+ *   icon row gets pushed to the middle. !important guards against the
+ *   composite-bar JS or other rules setting width inline. */
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar {
+	flex: 1 1 auto !important;
+	display: flex !important;
+	justify-content: center !important;
+	align-items: center;
+}
+
+/* Center the codicon glyph inside the action-label. sidebarpart.css positions
+ * the ::before pseudo with `position: absolute; left: 5px;` which was tuned
+ * for the OLD narrow layout. With our 32x32 active background + 20x20 action-
+ * label, `left: 5px` pushes the glyph to the left edge of its box. Override
+ * with `left: 0; right: 0; margin: auto;` so the glyph centers horizontally
+ * regardless of the parent box's width. */
+.monaco-workbench .part.sidebar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label::before,
+.monaco-workbench .part.auxiliarybar > .header-or-footer > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item .action-label::before {
+	left: 0 !important;
+	right: 0;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .monaco-workbench .pane-composite-part > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-label.codicon-more,
@@ -84,8 +126,9 @@
 
 .monaco-workbench .pane-composite-part > .title > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item.icon,
 .monaco-workbench .pane-composite-part > .header-or-footer > .composite-bar-container >.composite-bar > .monaco-action-bar .action-item.icon {
-	height: 35px; /* matches height of composite container */
-	padding: 0 3px;
+	padding: 6px;
+	align-items: center;
+	justify-content: center;
 }
 
 
